@@ -1,8 +1,14 @@
+import os
 from hindsight_client import Hindsight
 
-
 BANK_ID = "projectpulse-demo"
-HINDSIGHT_URL = "http://localhost:8888"
+
+# Railway will use the Cloudflare tunnel URL.
+# Locally, it falls back to Hindsight running on localhost:8888.
+HINDSIGHT_URL = os.getenv(
+    "HINDSIGHT_URL",
+    "http://localhost:8888"
+)
 
 
 def get_client():
@@ -14,7 +20,6 @@ def get_client():
 
 def retain_memory(content):
     """Store a project event or decision in Hindsight."""
-
     client = get_client()
 
     try:
@@ -23,6 +28,7 @@ def retain_memory(content):
             content=content
         )
         return True
+
     finally:
         try:
             client.close()
@@ -32,7 +38,6 @@ def retain_memory(content):
 
 def recall_memory(query):
     """Retrieve relevant project memories from Hindsight."""
-
     client = get_client()
 
     try:
@@ -40,6 +45,7 @@ def recall_memory(query):
             bank_id=BANK_ID,
             query=query
         )
+
     finally:
         try:
             client.close()
