@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProjectPulse</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fb;
+            color: #1f2937;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 22px 40px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+
+        header p {
+            margin: 6px 0 0;
+            color: #cbd5e1;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+        }
+
+        h2 {
+            margin-top: 0;
+        }
+
+        textarea,
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 15px;
+            margin: 10px 0;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        #status {
+            margin-top: 12px;
+            font-weight: bold;
+        }
+
+        #results {
+            white-space: pre-wrap;
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 15px;
+            min-height: 60px;
+        }
+        .memory-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .memory-type {
+            font-size: 12px;
+            font-weight: bold;
+            color: #2563eb;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>ProjectPulse</h1>
+    <p>AI project memory that remembers why your team made decisions.</p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>🧠 Add Project Memory</h2>
+
+        <textarea
+            id="memory"
+            placeholder="Example: We chose SQLite because SmartShield is currently only a small prototype."
+        ></textarea>
+
+        <button onclick="saveMemory()">Save Memory</button>
+
+        <div id="status"></div>
+    </div>
+
+
+    <div class="card">
+        <h2>🔎 Ask ProjectPulse</h2>
+
+        <input
+            id="query"
+            placeholder="Example: Why did we choose SQLite?"
+        >
+
+        <button onclick="recallMemory()">Recall Memory</button>
+
+        <div id="results">
+            Your recalled project history will appear here.
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+
+async function saveMemory() {
+
+    const content = document.getElementById("memory").value;
+    const status = document.getElementById("status");
+
+    if (!content.trim()) {
+        status.innerText = "Please enter a project update.";
+        return;
+    }
+
+    status.innerText = "Saving memory...";
+
+    const response = await fetch("/api/memory", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            content: content
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        status.innerText = "Memory saved successfully!";
+        document.getElementById("memory").value = "";
+    } else {
+        status.innerText = "Something went wrong.";
+    }
+}
+
+
+async function recallMemory() {
+
+    const query = document.getElementById("query").value;
+    const results = document.getElementById("results");
+
+    if (!query.trim()) {
+        results.innerText = "Please enter a question.";
+        return;
+    }
+
+    results.innerText = "Searching project memory...";
+
+    const response = await fetch(
+        "/api/memory?q=" + encodeURIComponent(query)
+    );
+
+    const data = await response.json();
+
+    if (data.success) {
+        if (!data.results.length) {
+            results.innerText = "No relevant project memories found.";
+            return;
+        }
+        results.innerHTML = data.results.map(memory => {
+            let title = "Project Memory";
+            if (memory.type === "observation"){
+                title = "Observation";
+            }else if (memory.type === "world"){
+                title = "Project Decision / Event";
+            }
+            return `
+                <div class="memory-item">
+                    <div class="memory-type">${title}</div>
+                    <div>${memory.text}</div>
+                </div>
+            `;
+        }).join("");
+    } else {
+        results.innerText = "Something went wrong.";
+    }
+}
+
+</script>
+
+</body>
+</html>
