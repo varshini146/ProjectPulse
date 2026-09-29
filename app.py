@@ -41,7 +41,7 @@ def get_memory():
     memories = []
 
     if hasattr(result, "results"):
-        for item in result.results:
+        for item in result.results[:5]:
             memories.append({
                 "text": item.text,
                 "type": item.type
